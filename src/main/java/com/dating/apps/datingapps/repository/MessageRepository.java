@@ -9,6 +9,5 @@ import com.dating.apps.datingapps.model.Message;
 
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
-    // Ambil chat berdasarkan matchId, urutkan dari yang terlama
     List<Message> findByMatchIdOrderBySentAtAsc(Long matchId);
 }

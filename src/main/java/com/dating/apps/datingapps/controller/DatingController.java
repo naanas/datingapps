@@ -3,8 +3,7 @@ package com.dating.apps.datingapps.controller;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
-import java.security.Principal; // Penting untuk ambil user dari Token
-
+import java.security.Principal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,7 +28,6 @@ public class DatingController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // --- AUTH ---
     @PostMapping("/register")
     public ResponseEntity<User> register(@RequestBody User user) {
         return ResponseEntity.ok(datingService.registerUser(user));
@@ -54,7 +52,6 @@ public class DatingController {
         }
     }
 
-    // --- PROFILE & UPLOAD ---
     @PutMapping("/profile/{userId}")
     public ResponseEntity<User> updateProfile(@PathVariable UUID userId, @RequestBody User user) {
         return ResponseEntity.ok(datingService.updateProfile(userId, user));
@@ -76,7 +73,6 @@ public class DatingController {
         }
     }
 
-    // --- DATING ---
     @GetMapping("/feed")
     public ResponseEntity<List<User>> getFeed(@RequestParam UUID userId,
             @RequestParam(defaultValue = "50.0") double radiusKm) {
@@ -93,7 +89,6 @@ public class DatingController {
                 Map.of("status", isMatch ? "MATCH" : "OK", "message", isMatch ? "It's a Match!" : "Swipe recorded"));
     }
 
-    // --- CHAT (SECURE) ---
     @GetMapping("/matches")
     public ResponseEntity<List<Match>> getMatches(@RequestParam UUID userId) {
         return ResponseEntity.ok(datingService.getMyMatches(userId));
@@ -102,7 +97,7 @@ public class DatingController {
     @PostMapping("/messages")
     public ResponseEntity<?> sendMessage(@RequestBody Map<String, Object> payload, Principal principal) {
         try {
-            // Ambil User ID otomatis dari Token (Aman, gak bisa dipalsukan)
+
             User sender = datingService.getUserByEmail(principal.getName());
 
             Long matchId = Long.valueOf(payload.get("matchId").toString());
@@ -117,7 +112,7 @@ public class DatingController {
     @GetMapping("/messages/{matchId}")
     public ResponseEntity<?> getChatHistory(@PathVariable Long matchId, Principal principal) {
         try {
-            // Ambil User ID otomatis dari Token
+
             User requester = datingService.getUserByEmail(principal.getName());
             return ResponseEntity.ok(datingService.getChatHistory(matchId, requester.getId()));
         } catch (Exception e) {

@@ -7,9 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class DatingappsApplication {
 
     public static void main(String[] args) {
-        // --- TAMBAHAN PENTING: MEMAKSA KONEKSI IPV4 ---
         System.setProperty("java.net.preferIPv4Stack", "true");
-        
+
         SpringApplication.run(DatingappsApplication.class, args);
     }
 

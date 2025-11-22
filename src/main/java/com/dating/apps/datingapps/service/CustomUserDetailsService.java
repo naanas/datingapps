@@ -20,8 +20,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         com.dating.apps.datingapps.model.User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User tidak ditemukan: " + email));
-
-        // Kita mapping User kita ke User bawaan Spring Security
         return new User(user.getEmail(), user.getPassword(), new ArrayList<>());
     }
 }

@@ -25,21 +25,19 @@ public class DatingService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // --- 1. HELPER (PENTING: Ini yang tadi hilang) ---
     public User getUserByEmail(String email) {
         return Objects.requireNonNull(
                 userRepository.findByEmail(email)
                         .orElseThrow(() -> new RuntimeException("User tidak ditemukan")));
     }
 
-    // --- AUTH ---
     public User registerUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return Objects.requireNonNull(userRepository.save(user));
     }
 
     public User login(String email, String rawPassword) {
-        User user = getUserByEmail(email); // Pakai helper biar konsisten
+        User user = getUserByEmail(email);
 
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
             throw new RuntimeException("Password salah");
@@ -68,7 +66,6 @@ public class DatingService {
         return Objects.requireNonNull(userRepository.save(existing));
     }
 
-    // --- DATING ---
     public List<User> getFeed(UUID myId, double radiusKm) {
         UUID safeId = Objects.requireNonNull(myId);
 
@@ -121,8 +118,6 @@ public class DatingService {
                 matchRepository.findAllByUserId(Objects.requireNonNull(userId)));
     }
 
-    // --- CHAT (SECURE LOGIC) ---
-    // FIX: Method ini dikembalikan lagi validasinya
     public Message sendMessage(Long matchId, UUID senderId, String content) {
         Match match = Objects.requireNonNull(matchRepository.findById(matchId)
                 .orElseThrow(() -> new RuntimeException("Match tidak ditemukan")));
@@ -140,12 +135,10 @@ public class DatingService {
         return Objects.requireNonNull(messageRepository.save(msg));
     }
 
-    // FIX: Method ini menerima 2 parameter agar cocok dengan Controller
     public List<Message> getChatHistory(Long matchId, UUID requestingUserId) {
         Match match = Objects.requireNonNull(matchRepository.findById(matchId)
                 .orElseThrow(() -> new RuntimeException("Match tidak ditemukan")));
 
-        // Validasi Security
         if (!match.getUser1Id().equals(requestingUserId) && !match.getUser2Id().equals(requestingUserId)) {
             throw new RuntimeException("Dilarang mengintip chat orang lain!");
         }

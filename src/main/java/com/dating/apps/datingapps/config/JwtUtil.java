@@ -10,15 +10,13 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    // Kunci rahasia (Harus panjang & rumit biar aman)
     private static final String SECRET = "rahasia_negara_ini_harus_sangat_panjang_sekali_minimal_256_bit_ya_ges_ya";
-    private static final long EXPIRATION_TIME = 86400000; // 1 Hari (24 jam)
+    private static final long EXPIRATION_TIME = 86400000;
 
     private Key getSignKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    // 1. Bikin Token
     public String generateToken(String email) {
         return Jwts.builder()
                 .setSubject(email)
@@ -28,7 +26,6 @@ public class JwtUtil {
                 .compact();
     }
 
-    // 2. Ambil Email dari Token
     public String extractEmail(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSignKey())
@@ -38,13 +35,12 @@ public class JwtUtil {
                 .getSubject();
     }
 
-    // 3. Cek Validitas Token
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token);
             return true;
         } catch (Exception e) {
-            return false; // Token kadaluarsa atau palsu
+            return false;
         }
     }
 }

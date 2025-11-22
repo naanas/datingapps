@@ -18,9 +18,9 @@ public class Message {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long matchId; // Chat ini milik Match ID berapa
-    private UUID senderId; // Siapa yang kirim
+    private Long matchId;
+    private UUID senderId;
 
-    private String content; // Isi chat
+    private String content;
     private LocalDateTime sentAt = LocalDateTime.now();
 }

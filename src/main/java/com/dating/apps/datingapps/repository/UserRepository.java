@@ -14,10 +14,8 @@ import com.dating.apps.datingapps.model.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-    // Untuk Login
     Optional<User> findByEmail(String email);
 
-    // Query Cari Jodoh (Spatial)
     @Query(value = """
                 SELECT * FROM users u
                 WHERE u.id != :myId

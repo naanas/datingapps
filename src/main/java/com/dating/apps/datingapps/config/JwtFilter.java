@@ -35,7 +35,6 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = null;
         String email = null;
 
-        // 1. Cek apakah ada Header Authorization dengan format "Bearer <token>"
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
             try {
@@ -45,7 +44,6 @@ public class JwtFilter extends OncePerRequestFilter {
             }
         }
 
-        // 2. Validasi Token & Set Authentication di Spring Security
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
@@ -56,12 +54,10 @@ public class JwtFilter extends OncePerRequestFilter {
                         userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // SAH! User dianggap sudah login untuk request ini
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
 
-        // 3. Lanjut ke filter berikutnya
         filterChain.doFilter(request, response);
     }
 }

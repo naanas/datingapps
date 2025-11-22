@@ -8,7 +8,7 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = "swipes", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"swiperId", "targetId"})
+        @UniqueConstraint(columnNames = { "swiperId", "targetId" })
 })
 public class Swipe {
     @Id
@@ -17,8 +17,8 @@ public class Swipe {
 
     private UUID swiperId;
     private UUID targetId;
-    
-    private String actionType; // "LIKE" or "PASS"
-    
+
+    private String actionType;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 }

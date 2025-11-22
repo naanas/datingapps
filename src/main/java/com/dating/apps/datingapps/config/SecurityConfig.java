@@ -38,7 +38,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Tambahkan @SuppressWarnings("deprecation") biar kuningnya hilang
     @Bean
     @SuppressWarnings("deprecation")
     public AuthenticationProvider authenticationProvider() {
