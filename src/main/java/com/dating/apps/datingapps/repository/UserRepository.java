@@ -1,6 +1,7 @@
 package com.dating.apps.datingapps.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,11 +14,10 @@ import com.dating.apps.datingapps.model.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-    // PERBAIKAN:
-    // 1. Menggunakan u.longitude & u.latitude karena kolom u.location tidak ada di
-    // Entity.
-    // 2. Menggunakan casting ::geography agar radius dihitung dalam METER, bukan
-    // DERAJAT.
+    // Untuk Login
+    Optional<User> findByEmail(String email);
+
+    // Query Cari Jodoh (Spatial)
     @Query(value = """
                 SELECT * FROM users u
                 WHERE u.id != :myId
