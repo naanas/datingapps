@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 import java.security.Principal;
+import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,7 +20,7 @@ import com.dating.apps.datingapps.service.DatingService;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*") // Izinkan akses dari semua origin (untuk development)
 public class DatingController {
 
     @Autowired
@@ -28,9 +30,19 @@ public class DatingController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    // --- MODIFIKASI DISINI: REGISTER MENERIMA LOKASI ---
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody User user) {
-        return ResponseEntity.ok(datingService.registerUser(user));
+    public ResponseEntity<?> register(@RequestBody User user) {
+        // Log sederhana untuk memastikan Latitude & Longitude masuk
+        System.out.println("Registering User: " + user.getEmail());
+        System.out.println("Location received: " + user.getLatitude() + ", " + user.getLongitude());
+
+        try {
+            User savedUser = datingService.registerUser(user);
+            return ResponseEntity.ok(savedUser);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/login")
@@ -38,11 +50,18 @@ public class DatingController {
         try {
             String email = payload.get("email");
             String password = payload.get("password");
+
             Authentication authentication = authenticationManager
                     .authenticate(new UsernamePasswordAuthenticationToken(email, password));
+
             if (authentication.isAuthenticated()) {
                 String token = jwtUtil.generateToken(email);
-                User userDetails = datingService.getUserByEmail(email); // Pakai helper baru
+                User userDetails = datingService.getUserByEmail(email);
+
+                // Update last active saat login
+                userDetails.setLastActive(LocalDateTime.now());
+                datingService.updateProfile(userDetails.getId(), userDetails);
+
                 return ResponseEntity.ok(Map.of("token", token, "user", userDetails));
             } else {
                 return ResponseEntity.status(401).body("Login Gagal");
@@ -60,33 +79,56 @@ public class DatingController {
     @PostMapping("/upload")
     public ResponseEntity<?> uploadPhoto(@RequestParam("file") MultipartFile file) {
         try {
+            // Pastikan folder uploads ada
             String uploadDir = "uploads/";
             Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath))
+            if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
+            }
+
+            // Generate nama file unik
             String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
             Path filePath = uploadPath.resolve(fileName);
+
+            // Simpan file
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Return URL yang bisa diakses (sesuaikan dengan config static resource jika
+            // perlu)
             return ResponseEntity.ok(Map.of("url", "uploads/" + fileName));
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Upload gagal: " + e.getMessage());
         }
     }
 
+    // --- LOGIC FEED MENGGUNAKAN LOKASI DARI DATABASE ---
     @GetMapping("/feed")
-    public ResponseEntity<List<User>> getFeed(@RequestParam UUID userId,
+    public ResponseEntity<?> getFeed(@RequestParam UUID userId,
             @RequestParam(defaultValue = "50.0") double radiusKm) {
-        return ResponseEntity.ok(datingService.getFeed(userId, radiusKm));
+        try {
+            List<User> matches = datingService.getFeed(userId, radiusKm);
+            return ResponseEntity.ok(matches);
+        } catch (Exception e) {
+            // Jika user belum punya lokasi atau error lain
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/swipe")
     public ResponseEntity<?> swipe(@RequestBody Map<String, String> payload) {
-        UUID myId = UUID.fromString(payload.get("myId"));
-        UUID targetId = UUID.fromString(payload.get("targetId"));
-        String action = payload.get("action");
-        boolean isMatch = datingService.swipeUser(myId, targetId, action);
-        return ResponseEntity.ok(
-                Map.of("status", isMatch ? "MATCH" : "OK", "message", isMatch ? "It's a Match!" : "Swipe recorded"));
+        try {
+            UUID myId = UUID.fromString(payload.get("myId"));
+            UUID targetId = UUID.fromString(payload.get("targetId"));
+            String action = payload.get("action");
+
+            boolean isMatch = datingService.swipeUser(myId, targetId, action);
+
+            return ResponseEntity.ok(
+                    Map.of("status", isMatch ? "MATCH" : "OK",
+                            "message", isMatch ? "It's a Match!" : "Swipe recorded"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping("/matches")
@@ -97,7 +139,7 @@ public class DatingController {
     @PostMapping("/messages")
     public ResponseEntity<?> sendMessage(@RequestBody Map<String, Object> payload, Principal principal) {
         try {
-
+            // Ambil user pengirim dari token JWT
             User sender = datingService.getUserByEmail(principal.getName());
 
             Long matchId = Long.valueOf(payload.get("matchId").toString());
@@ -112,7 +154,6 @@ public class DatingController {
     @GetMapping("/messages/{matchId}")
     public ResponseEntity<?> getChatHistory(@PathVariable Long matchId, Principal principal) {
         try {
-
             User requester = datingService.getUserByEmail(principal.getName());
             return ResponseEntity.ok(datingService.getChatHistory(matchId, requester.getId()));
         } catch (Exception e) {
