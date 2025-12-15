@@ -1,0 +1,6 @@
+echo .git > .gcloudignore
+echo .gitignore >> .gcloudignore
+echo target/ >> .gcloudignore
+echo mvnw >> .gcloudignore
+echo mvnw.cmd >> .gcloudignore
+echo .mvn/ >> .gcloudignore
